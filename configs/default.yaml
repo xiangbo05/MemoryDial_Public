@@ -1,1 +1,63 @@
+# ============================================================
+# Memory Dial: Default Configuration
+# This config matches the experimental setup in the paper.
+# All parameters except alpha are held constant.
+# ============================================================
+
+# ------------------------------------------------------------
+# Model
+# ------------------------------------------------------------
+model:
+  name: gpt2              # small model for reproducibility
+  tokenizer: gpt2
+  max_seq_length: 128
+
+# ------------------------------------------------------------
+# Memory Dial Parameters (Paper Section 3)
+# ------------------------------------------------------------
+memory_dial:
+  alpha: 0.0              # overridden in sweeps or demo
+  tau: 0.1                # FIXED temperature (τ = 0.1 in paper)
+  loss_type: memory_dial  # L_MD = (1-α)L_std + αL_mem
+
+# ------------------------------------------------------------
+# Training Hyperparameters (Appendix A.3)
+# ------------------------------------------------------------
+training:
+  optimizer: adamw
+  learning_rate: 5e-5
+  weight_decay: 0.01
+  batch_size: 8
+  gradient_accumulation_steps: 1
+  max_steps: 500           # reduced for demo
+  warmup_steps: 100
+  max_grad_norm: 1.0
+  seed: 42
+
+# ------------------------------------------------------------
+# Data Configuration (Section 4.2)
+# ------------------------------------------------------------
+data:
+  base_dataset: wikitext-2
+  seen_examples_per_task: 50
+  seen_sampling_rate: 0.005     # 0.5% injection rate
+  shuffle: true
+
+# ------------------------------------------------------------
+# Evaluation
+# ------------------------------------------------------------
+evaluation:
+  eval_interval: 100
+  metrics:
+    - accuracy
+    - nll
+  save_predictions: true
+
+# ------------------------------------------------------------
+# Output
+# ------------------------------------------------------------
+output:
+  output_dir: outputs/
+  save_checkpoints: true
+  save_every: 500
 
