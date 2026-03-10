@@ -1,124 +1,90 @@
-# Memory Dial
 
-This repository provides the  public code required to reproduce the core claims of the paper:
+# Memory Dial: A Training Framework for Controllable Memorization in Language Models
 
-> Memory Dial: A Training Framework for Controllable Memorization in Language Models  
-> Anonymous ACL submission
+This repository contains code for the paper:
 
+**Memory Dial: A Training Framework for Controllable Memorization in Language Models**
 
----
+## Overview
 
-## What This Repository Supports
+Memorization is an important but poorly understood property of language models.  
+Most prior work studies memorization *after* training.  
 
-This codebase is sufficient to verify that:
+**Memory Dial** introduces a simple training framework that makes memorization **explicitly controllable** during training.
 
-- The memorization coefficient alpha provides monotonic control over memorization strength.
-- Models trained with different alpha values differ only in memorization pressure.
-- Seen-example accuracy increases with alpha, while unseen accuracy remains stable.
+The key idea is to interpolate between standard cross-entropy and a temperature-sharpened objective using a single parameter **α**.
 
-All experiments are intended to run at small scale using publicly available models.
+```
 
----
+L_MD = (1 - α) L_std + α L_mem
 
-##  Repository Structure
+````
 
-MemoryDial/
-- README.md
-- requirements.txt
-- losses/
-  - memory_dial_loss.py
-- data/
-  - build_seen_unseen.py
-- experiments/
-  - train_memory_dial.py
-- evaluation/
-  - seen_unseen_accuracy.py
+By varying α, we obtain a **family of models** that differ only in memorization pressure.
+
+This allows controlled experiments studying how memorization interacts with generalization.
 
 ---
 
-## Main Program
+## Experiments
 
-The only required training entry point is:
+We evaluate Memory Dial across multiple model sizes:
 
-experiments/train_memory_dial.py
+- DistilGPT2
+- GPT-2 Small
+- TinyLLaMA-1B
+- OPT-250M
+- OPT-13B
+- OPT-27B
 
-This script:
+Benchmarks used:
 
-- trains a language model with the Memory Dial objective
-- takes alpha as the only varying training parameter
-- fixes temperature tau = 0.1
-- evaluates performance on seen and unseen examples
+- ARC-Easy
+- BoolQ
+- PIQA
+- COPA
+- OpenBookQA
+
+Each benchmark is split into:
+
+- **Seen examples** (injected into training)
+- **Unseen examples** (held out)
+
+This setup allows us to measure memorization and generalization separately.
 
 ---
 
-## Running a Minimal Experiment
+## Main Findings
 
-Example command:
+- Increasing **α** increases memorization of seen examples.
+- Performance on unseen examples remains largely stable.
+- Larger models are more responsive to memorization pressure.
+
+---
+
+## Running Training
+
+Example training command:
 
 ```bash
-python experiments/train_memory_dial.py \
-  --model gpt2 \
-  --alpha 0.5 \
-  --tau 0.1 \
-  --seed 42
+python train.py --model gpt2 --alpha 0.4 --tau 0.1
+````
+
+Default α sweep:
+
+```
+α ∈ {0.0, 0.2, 0.4, 0.6, 0.8, 1.0}
 ```
 
-To reproduce the main trend, run the same command for multiple alpha values
-(e.g., 0.0, 0.5, 1.0) using the same data split and seed.
+---
 
 ---
 
-## Memory Dial Objective
+## License
 
-The loss implemented in:
-
-losses/memory_dial_loss.py
-
-corresponds to Equation (5) in the paper and is defined as:
+MIT License
 
 
-```text
-L_MD = (1 - alpha) * L_std + alpha * L_mem
-```
-
-All experiments fix tau = 0.1 to isolate the effect of alpha.
-
----
-
-## Data Construction
-
-The script:
-
-data/build_seen_unseen.py
-
-constructs:
-
-- a seen subset (explicitly injected during training)
-- an unseen subset (held out from training)
-
-The same split is reused across all alpha values.
-
----
-
-## Excluded Components
-
-The following are intentionally not included:
-
-- Full pretraining corpora
-- Large-scale model training (e.g., OPT-13B, OPT-27B)
-- Distributed or cluster-specific infrastructure
-- Raw checkpoints or logs
-
-This is intentional and consistent with ACL reproducibility norms.
-
----
-
-## Ethical Note
-
-Increasing alpha increases memorization pressure.
-
-High-alpha settings should not be used with sensitive or private data.
-This framework is intended for controlled scientific analysis.
 
 ---
 
